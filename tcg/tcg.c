@@ -1071,7 +1071,7 @@ void tcg_dump_ops(TCGContext *s)
                 col += qemu_log(",%s", t);
             }
         } else {
-            col += qemu_log(" %s ", def->name);
+            col += qemu_log(" %s [op %u, o %u, i %u, c %u, %u] ", def->name, c, def->nb_oargs, def->nb_iargs, def->nb_cargs, def->nb_args);
 
             nb_oargs = def->nb_oargs;
             nb_iargs = def->nb_iargs;
@@ -1082,15 +1082,15 @@ void tcg_dump_ops(TCGContext *s)
                 if (k != 0) {
                     col += qemu_log(",");
                 }
-                col += qemu_log("%s", tcg_get_arg_str_idx(s, buf, sizeof(buf),
-                                                          args[k++]));
+                col += qemu_log("%s [o %08lx] ", tcg_get_arg_str_idx(s, buf, sizeof(buf),
+                                                          args[k]), args[k]); ++k;
             }
             for (i = 0; i < nb_iargs; i++) {
                 if (k != 0) {
                     col += qemu_log(",");
                 }
-                col += qemu_log("%s", tcg_get_arg_str_idx(s, buf, sizeof(buf),
-                                                          args[k++]));
+                col += qemu_log("%s [i %08lx] ", tcg_get_arg_str_idx(s, buf, sizeof(buf),
+                                                          args[k]), args[k]); ++k;
             }
             switch (c) {
             case INDEX_op_brcond_i32:
@@ -1102,9 +1102,9 @@ void tcg_dump_ops(TCGContext *s)
             case INDEX_op_setcond_i64:
             case INDEX_op_movcond_i64:
                 if (args[k] < ARRAY_SIZE(cond_name) && cond_name[args[k]]) {
-                    col += qemu_log(",%s", cond_name[args[k++]]);
+                    col += qemu_log(",%s [c %08lx] ", cond_name[args[k]], args[k]); ++k;
                 } else {
-                    col += qemu_log(",$0x%" TCG_PRIlx, args[k++]);
+                    col += qemu_log(",$0x%" TCG_PRIlx " [%08lx] ", args[k], args[k]); ++k;
                 }
                 i = 1;
                 break;
@@ -1116,6 +1116,8 @@ void tcg_dump_ops(TCGContext *s)
                     TCGMemOpIdx oi = args[k++];
                     TCGMemOp op = get_memop(oi);
                     unsigned ix = get_mmuidx(oi);
+
+                    col += qemu_log("[%08x, mo %u, ix %u] ", oi, op, ix);
 
                     if (op & ~(MO_AMASK | MO_BSWAP | MO_SSIZE)) {
                         col += qemu_log(",$0x%x,%u", op, ix);
