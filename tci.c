@@ -498,16 +498,14 @@ uintptr_t tcg_qemu_tb_exec(CPUArchState *env, uint8_t *tb_ptr)
         tci_tb_ptr = (uintptr_t)tb_ptr;
 #endif
 
-for (unsigned int i = 0; i < op_size; i++) {
-if (i == 0) {
-fprintf(stderr, "TCI: opc %u [%02x] ", opc, opc);
-} else if (i == 1) {
-fprintf(stderr, "(len %u) ", op_size);
-} else {
-fprintf(stderr, "%02x ", tb_ptr[i]);
-}
+//------------------------------------------------------------------------------
+fprintf(stderr, "TCI: opc %3u [%02x] ", opc, opc);
+fprintf(stderr, "(len %2u) ", op_size);
+for (unsigned int i = 2; i < op_size; i++) {
+    fprintf(stderr, "%02x ", tb_ptr[i]);
 }
 fprintf(stderr, "\n");
+//------------------------------------------------------------------------------
 
         /* Skip opcode and size entry. */
         tb_ptr += 2;
