@@ -78,14 +78,14 @@ int print_insn_tci(bfd_vma addr, disassemble_info *info)
         // Write to binary file
         uint8_t *instruction = (uint8_t *)malloc(length * sizeof(uint8_t));
         status = info->read_memory_func(addr - 1, instruction, length, info);
-        /*if (status == 0) {
-            for(i = 0; i < length; i++) 
+        if (status == 0) {
+            for(i = 0; i < length; i++)
                 info->fprintf_func(info->stream, "%02x", instruction[i]);
             FILE *f = fopen("tci.bin", "ab");
             if (f != NULL)
                 fwrite(instruction, length, 1, f);
             fclose(f);
-        }*/
+        }
 
         //fprintf(stderr, "\n-------TCI Disassembly------\n");
         fprintf(stderr, "TCI: opc %3u [%02x] (len %2u) ", instruction[0], instruction[0], length);
