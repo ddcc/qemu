@@ -114,7 +114,6 @@ static void tcg_out_tb_init(TCGContext *s);
 static bool tcg_out_tb_finalize(TCGContext *s);
 
 
-void zach_dump_ops(TCGContext *s);
 
 static TCGRegSet tcg_target_available_regs[2];
 static TCGRegSet tcg_target_call_clobber_regs;
@@ -1047,7 +1046,19 @@ void tcg_dump_ops(TCGContext *s)
         fwrite(&c, sizeof(uint8_t), 1, f);
         /* Print the hexadecimal */
         fprintf(stderr, "DUMP: (OP %u) [ %02x ", c, c);
-        for (int i = 0; i < (c != INDEX_op_call ? def->nb_args : op->callo + op->calli); i++) {
+        for (int i = 0; i < (c != INDEX_op_call ? def->nb_args : op->callo + op->calli + 2); i++) {
+            if (c == INDEX_op_call) {
+                uint8_t num = 0;
+                if (i == 0) {
+                    num = op->callo;
+                    fwrite(&num, sizeof(num), 1, f);
+                }
+                if (i == op->callo) {
+                    num = op->calli;
+                    fwrite(&num, sizeof(num), 1, f);
+                }
+            }
+
             if (i < (c != INDEX_op_call ? def->nb_oargs + def->nb_iargs : op->callo + op->calli)) {
                 fprintf(stderr, "%02lx ", args[i]);
                 fwrite(&args[i], sizeof(uint8_t), 1, f);
@@ -1199,133 +1210,6 @@ void tcg_dump_ops(TCGContext *s)
             }
         }
         qemu_log("\n");
-    }
-}
-
-void zach_dump_ops(TCGContext *s)
-{
-    char buf[128];
-    TCGOp *op;
-    int oi;
-
-    for (oi = s->gen_op_buf[0].next; oi != 0; oi = op->next) {
-        int i, k, nb_oargs, nb_iargs, nb_cargs;
-        const TCGOpDef *def;
-        const TCGArg *args;
-        TCGOpcode c;
-
-        op = &s->gen_op_buf[oi];
-        c = op->opc;
-        def = &tcg_op_defs[c];
-        args = &s->gen_opparam_buf[op->args];
-
-        if (0) { //(c == INDEX_op_insn_start) {
-
-        } else if (0) { //(c == INDEX_op_call) {
-            /* variable number of arguments */
-            nb_oargs = op->callo;
-            nb_iargs = op->calli;
-            nb_cargs = def->nb_cargs;
-
-            /* function name, flags, out args */
-            fprintf(stderr, " %s %s,$0x%" TCG_PRIlx ",$%d", def->name,
-                            tcg_find_helper(s, args[nb_oargs + nb_iargs]),
-                            args[nb_oargs + nb_iargs + 1], nb_oargs);
-            for (i = 0; i < nb_oargs; i++) {
-                fprintf(stderr, ",%s", tcg_get_arg_str_idx(s, buf, sizeof(buf),
-                                                           args[i]));
-            }
-            for (i = 0; i < nb_iargs; i++) {
-                TCGArg arg = args[nb_oargs + i];
-                const char *t = "<dummy>";
-                if (arg != TCG_CALL_DUMMY_ARG) {
-                    t = tcg_get_arg_str_idx(s, buf, sizeof(buf), arg);
-                }
-                fprintf(stderr, ",%s", t);
-            }
-        } else {
-            fprintf(stderr, " %s [op %u, o %u, i %u, c %u, %u] ",
-                    def->name, c, def->nb_oargs, def->nb_iargs,
-                    def->nb_cargs, def->nb_args);
-
-            nb_oargs = def->nb_oargs;
-            nb_iargs = def->nb_iargs;
-            nb_cargs = def->nb_cargs;
-
-            k = 0;
-            for (i = 0; i < nb_oargs; i++) {
-                if (k != 0) {
-                    fprintf(stderr, ",");
-                }
-                fprintf(stderr, "%s [o %08lx] ", tcg_get_arg_str_idx(s, buf, sizeof(buf),
-                                                          args[k]), args[k]); ++k;
-            }
-            for (i = 0; i < nb_iargs; i++) {
-                if (k != 0) {
-                    fprintf(stderr, ",");
-                }
-                fprintf(stderr, "%s [i %08lx] ", tcg_get_arg_str_idx(s, buf, sizeof(buf),
-                                                          args[k]), args[k]); ++k;
-            }
-            switch (c) {
-            case INDEX_op_brcond_i32:
-            case INDEX_op_setcond_i32:
-            case INDEX_op_movcond_i32:
-            case INDEX_op_brcond2_i32:
-            case INDEX_op_setcond2_i32:
-            case INDEX_op_brcond_i64:
-            case INDEX_op_setcond_i64:
-            case INDEX_op_movcond_i64:
-                if (args[k] < ARRAY_SIZE(cond_name) && cond_name[args[k]]) {
-                    fprintf(stderr, ",%s [c %08lx] ", cond_name[args[k]], args[k]); ++k;
-                } else {
-                    fprintf(stderr, ",$0x%" TCG_PRIlx " [%08lx] ", args[k], args[k]); ++k;
-                }
-                i = 1;
-                break;
-            case INDEX_op_qemu_ld_i32:
-            case INDEX_op_qemu_st_i32:
-            case INDEX_op_qemu_ld_i64:
-            case INDEX_op_qemu_st_i64:
-                {
-                    TCGMemOpIdx oi = args[k++];
-                    TCGMemOp op = get_memop(oi);
-                    unsigned ix = get_mmuidx(oi);
-
-                    fprintf(stderr, "[%08x, mo %u, ix %u] ", oi, op, ix);
-
-                    if (op & ~(MO_AMASK | MO_BSWAP | MO_SSIZE)) {
-                        fprintf(stderr, ",$0x%x,%u", op, ix);
-                    } else {
-                        const char *s_al, *s_op;
-                        s_al = alignment_name[(op & MO_AMASK) >> MO_ASHIFT];
-                        s_op = ldst_name[op & (MO_BSWAP | MO_SSIZE)];
-                        fprintf(stderr, ",%s%s,%u", s_al, s_op, ix);
-                    }
-                    i = 1;
-                }
-                break;
-            default:
-                i = 0;
-                break;
-            }
-            switch (c) {
-            case INDEX_op_set_label:
-            case INDEX_op_br:
-            case INDEX_op_brcond_i32:
-            case INDEX_op_brcond_i64:
-            case INDEX_op_brcond2_i32:
-                fprintf(stderr, "%s$L%d", k ? "," : "", arg_label(args[k])->id);
-                i++, k++;
-                break;
-            default:
-                break;
-            }
-            for (; i < nb_cargs; i++, k++) {
-                fprintf(stderr, "%s$0x%" TCG_PRIlx, k ? "," : "", args[k]);
-            }
-        }
-        fprintf(stderr, "\n");
     }
 }
 
@@ -2821,14 +2705,6 @@ int tcg_gen_code(TCGContext *s, TranslationBlock *tb)
 
     /* flush instruction cache */
     flush_icache_range((uintptr_t)s->code_buf, (uintptr_t)s->code_ptr);
-
-    // Print instruction cache to binary file and stderr
-    fprintf(stderr, "\n----\n");
-    zach_dump_ops(s);
-    FILE *f = fopen("tcg.bin", "ab");
-    if (f != NULL)
-        fwrite(s->code_buf, s->code_ptr - s->code_buf, 1, f);
-    fclose(f);
 
     return tcg_current_code_size(s);
 }

@@ -1,6 +1,6 @@
 # Compilation
 ```
-./configure --enable-debug --enable-trace-backends=simple --enable-tcg-interpreter --target-list=arm-softmmu,arm-linux-user
+./configure --enable-debug --enable-trace-backends=simple --target-list=arm-softmmu,arm-linux-user
 make
 ```
 

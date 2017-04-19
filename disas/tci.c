@@ -53,36 +53,8 @@ int print_insn_tci(bfd_vma addr, disassemble_info *info)
         int nb_iargs = def->nb_iargs;
         int nb_cargs = def->nb_cargs;
         /* TODO: Improve disassembler output. */
-        info->fprintf_func(info->stream, "%10s\to=%d i=%d c=%d\t",
+        info->fprintf_func(info->stream, "%s\to=%d i=%d c=%d",
                            def->name, nb_oargs, nb_iargs, nb_cargs);
-        
-        // Zach's modification
-        /* For reference:
-            typedef struct TCGOpDef {
-                const char *name;
-                uint8_t nb_oargs, nb_iargs, nb_cargs, nb_args;
-                uint8_t flags;
-                TCGArgConstraint *args_ct;
-                int *sorted_args;
-            #if defined(CONFIG_DEBUG_TCG)
-                int used;
-            #endif
-            } TCGOpDef;
-        */
-        uint8_t i;
-        // Write to binary file
-        uint8_t *instruction = (uint8_t *)malloc(length * sizeof(uint8_t));
-        status = info->read_memory_func(addr - 1, instruction, length, info);
-        /*if (status == 0) {
-            for(i = 0; i < length; i++) 
-                info->fprintf_func(info->stream, "%02x", instruction[i]);
-            FILE *f = fopen("tci.bin", "ab");
-            if (f != NULL)
-                fwrite(instruction, length, 1, f);
-            fclose(f);
-        }*/
-        for(i = 0; i < length; i++) 
-            fprintf(stderr, "%02x", instruction[i]);
     }
 
     return length;
