@@ -88,9 +88,10 @@ int print_insn_tci(bfd_vma addr, disassemble_info *info)
         }*/
 
         //fprintf(stderr, "\n-------TCI Disassembly------\n");
-        fprintf(stderr, "TCI: opc %3u [%02x] (len %2u) ", instruction[0], instruction[0], length);
+        //fprintf(stderr, "\nTCI: opc %3u [%02x] (len %2u) ", instruction[0], instruction[0], length);
+        fprintf(stderr, "%02x%02x", instruction[0], instruction[1]);
         for(i = 2; i < length; i++) 
-            fprintf(stderr, "%02x ", instruction[i]);
+            fprintf(stderr, "%02x", instruction[i]);
         //fprintf(stderr, "\n-------End Disassembly------\n");
 
         // End Zach's modification
