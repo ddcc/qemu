@@ -53,7 +53,7 @@ int print_insn_tci(bfd_vma addr, disassemble_info *info)
         int nb_iargs = def->nb_iargs;
         int nb_cargs = def->nb_cargs;
         /* TODO: Improve disassembler output. */
-        info->fprintf_func(info->stream, "%10s\to=%d\ti=%d\tc=%d\n",
+        info->fprintf_func(info->stream, "%10s\to=%d i=%d c=%d\t",
                            def->name, nb_oargs, nb_iargs, nb_cargs);
         
         // Zach's modification
@@ -69,12 +69,7 @@ int print_insn_tci(bfd_vma addr, disassemble_info *info)
             #endif
             } TCGOpDef;
         */
-        /*info->fprintf_func(info->stream, "args=%d\tflags=%d\nInstruction word=",
-                            def->nb_args, def->flags);*/
         uint8_t i;
-        /*for (i = 0; i < nb_args; i++) {
-            info->fprintf_func(info->stream, "args=%d\tflags=%d\nInstruction word=",
-                            def->nb_args, def->flags);*/
         // Write to binary file
         uint8_t *instruction = (uint8_t *)malloc(length * sizeof(uint8_t));
         status = info->read_memory_func(addr - 1, instruction, length, info);
@@ -86,16 +81,8 @@ int print_insn_tci(bfd_vma addr, disassemble_info *info)
                 fwrite(instruction, length, 1, f);
             fclose(f);
         }*/
-
-        //fprintf(stderr, "\n-------TCI Disassembly------\n");
-        //fprintf(stderr, "\nTCI: opc %3u [%02x] (len %2u) ", instruction[0], instruction[0], length);
-        fprintf(stderr, "%02x%02x", instruction[0], instruction[1]);
-        for(i = 2; i < length; i++) 
+        for(i = 0; i < length; i++) 
             fprintf(stderr, "%02x", instruction[i]);
-        //fprintf(stderr, "\n-------End Disassembly------\n");
-
-        // End Zach's modification
-            
     }
 
     return length;
