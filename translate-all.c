@@ -2060,7 +2060,7 @@ static int dump_region(void *priv, target_ulong start,
         ((prot & PAGE_EXEC) ? 'x' : '-'));
 
     /* Open the output file */
-    if (prot & PAGE_READ) {
+    if ((prot & PAGE_READ) && (prot & PAGE_EXEC)) {
         target_ulong temp;
         FILE *f = fopen("arm.bin", "ab");
         if (f == NULL) {
