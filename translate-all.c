@@ -2059,6 +2059,22 @@ static int dump_region(void *priv, target_ulong start,
         ((prot & PAGE_WRITE) ? 'w' : '-'),
         ((prot & PAGE_EXEC) ? 'x' : '-'));
 
+    /* Open the output file */
+    if (prot & PAGE_READ) {
+        target_ulong temp;
+        FILE *f = fopen("arm.bin", "ab");
+        if (f == NULL) {
+            fprintf(stderr, "Could not write ARM to file!\n");
+            abort();
+        }
+        temp = start;
+        fwrite(&temp, sizeof(temp), 1, f);
+        temp = end - start;
+        fwrite(&temp, sizeof(temp), 1, f);
+        fwrite(g2h(start), sizeof(void *), (end - start) / sizeof(void *), f);
+        fclose(f);
+    }
+
     return 0;
 }
 
