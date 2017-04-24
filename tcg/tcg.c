@@ -1060,12 +1060,23 @@ void tcg_dump_ops(TCGContext *s)
             }
 
             if (i < (c != INDEX_op_call ? def->nb_oargs + def->nb_iargs : op->callo + op->calli)) {
-                fprintf(stderr, "%02lx ", args[i]);
+                fprintf(stderr, "%02x ", args[i]);
                 fwrite(&args[i], sizeof(uint8_t), 1, f);
             }
             else {
-                fprintf(stderr, "%016lx ", args[i]);
+                fprintf(stderr, "%016x ", args[i]);
                 fwrite(&args[i], sizeof(args[i]), 1, f);
+
+                if (c == INDEX_op_goto_tb) {
+                    tcg_target_ulong tmp;
+                    if (s->tb_jmp_insn_offset) {
+                        tmp = s->tb_jmp_insn_offset[args[i]];
+                        fwrite(&tmp, sizeof(tmp), 1, f);
+                    } else {
+                        tmp = (intptr_t) s->tb_jmp_target_addr;
+                        fwrite(&tmp, sizeof(tmp), 1, f);
+                    }
+                }
             }
         }
         fprintf(stderr, "]\n");
