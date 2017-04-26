@@ -218,7 +218,7 @@ static TranslationBlock *tb_find_pc(uintptr_t tc_ptr);
 
 void cpu_gen_init(void)
 {
-    tcg_context_init(&tcg_ctx); 
+    tcg_context_init(&tcg_ctx);
 }
 
 /* Encode VAL as a signed leb128 sequence at P.
@@ -2047,6 +2047,8 @@ int walk_memory_regions(void *priv, walk_memory_regions_fn fn)
     return walk_memory_regions_end(&data, 0, 0);
 }
 
+enum segment_type { SEG_RX, SEG_RW, SEG_STACK };
+
 static int dump_region(void *priv, target_ulong start,
     target_ulong end, unsigned long prot)
 {
@@ -2060,19 +2062,36 @@ static int dump_region(void *priv, target_ulong start,
         ((prot & PAGE_EXEC) ? 'x' : '-'));
 
     /* Open the output file */
-    if ((prot & PAGE_READ) && (prot & PAGE_EXEC)) {
+    if (prot & PAGE_READ) {
+        uint8_t type;
         target_ulong temp;
+
         FILE *f = fopen("arm.bin", "ab");
         if (f == NULL) {
             fprintf(stderr, "Could not write ARM to file!\n");
             abort();
         }
-        temp = start;
-        fwrite(&temp, sizeof(temp), 1, f);
-        temp = end - start;
-        fwrite(&temp, sizeof(temp), 1, f);
-        fwrite(g2h(start), sizeof(void *), (end - start) / sizeof(void *), f);
-        fclose(f);
+
+        // Default Linux stack size
+        if ((prot & PAGE_WRITE) && end - start == 1048576 ) {
+            type = SEG_STACK;
+            fwrite(&type, sizeof(type), 1, f);
+            temp = start;
+            fwrite(&temp, sizeof(temp), 1, f);
+            temp = end - start;
+            fwrite(&temp, sizeof(temp), 1, f);
+            // Don't write out 8MB of zeros
+            fclose(f);
+        } else {
+            type = (prot & PAGE_EXEC) ? SEG_RX : SEG_RW;
+            fwrite(&type, sizeof(type), 1, f);
+            temp = start;
+            fwrite(&temp, sizeof(temp), 1, f);
+            temp = end - start;
+            fwrite(&temp, sizeof(temp), 1, f);
+            fwrite(g2h(start), sizeof(void *), (end - start) / sizeof(void *), f);
+            fclose(f);
+        }
     }
 
     return 0;
