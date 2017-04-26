@@ -4184,6 +4184,22 @@ int main(int argc, char **argv, char **envp)
                  info->start_stack);
         qemu_log("brk         0x" TARGET_ABI_FMT_lx "\n", info->brk);
         qemu_log("entry       0x" TARGET_ABI_FMT_lx "\n", info->entry);
+
+        FILE *f = fopen("image.bin", "ab");
+        if (f == NULL) {
+            fprintf(stderr, "Could not write image to file!\n");
+            abort();
+        }
+
+        fwrite(&info->start_code, sizeof(info->start_code), 1, f);
+        fwrite(&info->end_code, sizeof(info->end_code), 1, f);
+        fwrite(&info->start_data, sizeof(info->start_data), 1, f);
+        fwrite(&info->end_data, sizeof(info->end_data), 1, f);
+        fwrite(&info->start_brk, sizeof(info->start_brk), 1, f);
+        fwrite(&info->brk, sizeof(info->brk), 1, f);
+        fwrite(&info->start_stack, sizeof(info->start_stack), 1, f);
+        fwrite(&info->entry, sizeof(info->entry), 1, f);
+        fclose(f);
     }
 
     target_set_brk(info->brk);
