@@ -15,6 +15,7 @@ PKG_CONFIG_LIBDIR=/usr/lib/i386-linux-gnu/pkgconfig ./configure --enable-debug -
 
 # Execution
 ```
+ulimit -s 1024
 ./arm-linux-user/qemu-arm -d page,op_opt,out_asm,in_asm,cpu -L /usr/arm-linux-gnueabi ../verifIR/proofs/ocaml-code/test_program/add
-ls -alh arm.bin tci.bin
+ls -alh arm.bin tci.bin image.bin
 ```
