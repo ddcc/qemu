@@ -1060,11 +1060,11 @@ void tcg_dump_ops(TCGContext *s)
             }
 
             if (i < (c != INDEX_op_call ? def->nb_oargs + def->nb_iargs : op->callo + op->calli)) {
-                fprintf(stderr, "%02x ", args[i]);
+                fprintf(stderr, "%02zx ", args[i]);
                 fwrite(&args[i], sizeof(uint8_t), 1, f);
             }
             else {
-                fprintf(stderr, "%016x ", args[i]);
+                fprintf(stderr, "%016zx ", args[i]);
                 fwrite(&args[i], sizeof(args[i]), 1, f);
 
                 if (c == INDEX_op_goto_tb) {
